@@ -19,9 +19,8 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
       document.documentElement.classList.remove("dark");
     }
   });
-
   return (
-    <div className="flex min-h-screen w-full bg-gray-50 text-gray-900">
+    <div className="flex min-h-screen w-full bg-gray-50 text-gray-900 dark:bg-dark-bg dark:text-gray-100">
       <Sidebar />
       <main
         className={`flex w-full flex-col bg-gray-50 dark:bg-dark-bg ${

@@ -28,7 +28,7 @@ const Search = () => {
   useEffect(() => {
     return handleSearch.cancel;
   }, [handleSearch.cancel]);
-
+ 
   return (
     <div className="p-8">
       <Header name="Search" />

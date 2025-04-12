@@ -5,7 +5,8 @@ import {
   Project,
   Task,
   useGetProjectsQuery,
-  useGetTasksQuery,
+  useGetTasksByUserQuery,
+  useGetAuthUserQuery,
 } from "@/state/api";
 import React from "react";
 import { useAppSelector } from "../redux";
@@ -36,18 +37,32 @@ const taskColumns: GridColDef[] = [
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
 
 const HomePage = () => {
-  const {
-    data: tasks,
-    isLoading: tasksLoading,
-    isError: tasksError,
-  } = useGetTasksQuery({ projectId: parseInt("1") });
-  const { data: projects, isLoading: isProjectsLoading } =
-    useGetProjectsQuery();
+  // Get authenticated user
+  const { data: authUserData, isLoading: isAuthLoading } = useGetAuthUserQuery({});
+  
+  // Get all projects
+  const { data: projects, isLoading: isProjectsLoading } = useGetProjectsQuery(undefined);
+  
+  // Get tasks for the current user
+  const { data: tasks, isLoading: tasksLoading, isError: tasksError } = useGetTasksByUserQuery(
+    authUserData?.userDetails?.userId || 0,
+    { skip: !authUserData?.userDetails?.userId }
+  );
 
   const isDarkMode = useAppSelector((state) => state.global.isDarkMode);
 
-  if (tasksLoading || isProjectsLoading) return <div>Loading..</div>;
-  if (tasksError || !tasks || !projects) return <div>Error fetching data</div>;
+  if (isAuthLoading || tasksLoading || isProjectsLoading) return <div>Loading..</div>;
+  if (tasksError || !tasks || !projects || !authUserData) return <div>Error fetching data</div>;
+
+  // Filter projects to only show user's projects
+  const userProjects = projects.filter(
+    (project) => {
+      // Get tasks for this project
+      const projectTasks = tasks.filter(task => task.projectId === project.id);
+      // If user has tasks in this project, include it
+      return projectTasks.length > 0;
+    }
+  );
 
   const priorityCount = tasks.reduce(
     (acc: Record<string, number>, task: Task) => {
@@ -63,7 +78,7 @@ const HomePage = () => {
     count: priorityCount[key],
   }));
 
-  const statusCount = projects.reduce(
+  const statusCount = userProjects.reduce(
     (acc: Record<string, number>, project: Project) => {
       const status = project.endDate ? "Completed" : "Active";
       acc[status] = (acc[status] || 0) + 1;
